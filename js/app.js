@@ -97,11 +97,10 @@ function platformBadge(p) {
     return `<span class="badge ${cls}">${esc(p)}</span>`;
 }
 
-const COLORS = ['#f39c12', '#2ecc71', '#e74c3c', '#9b59b6', '#3498db', '#16a085'];
+const platClass = p => p.startsWith('PS') ? 'ps' : p.startsWith('Xbox') ? 'xbox' : 'switch';
 function coverHtml(l) {
-    if (l.image) return `<div class="image-box p-0" style="background:#444"><img src="${esc(l.image)}" alt="${esc(l.title)} cover" onerror="this.style.display='none'"></div>`;
-    const color = COLORS[[...l.title].reduce((a, c) => a + c.charCodeAt(0), 0) % COLORS.length];
-    return `<div class="image-box" style="background:${color}">${esc(l.title)}</div>`;
+    if (l.image) return `<div class="image-box p-0"><img src="${esc(l.image)}" alt="${esc(l.title)} cover" onerror="this.style.display='none'"></div>`;
+    return `<div class="image-box cover-${platClass(l.platform)}"><span>${esc(l.title)}</span></div>`;
 }
 
 function cardHtml(l, { mine = false } = {}) {
@@ -112,13 +111,13 @@ function cardHtml(l, { mine = false } = {}) {
         actions = `<button class="btn btn-sm btn-outline-light me-2" data-edit="${l.id}">Edit</button>
                    <button class="btn btn-sm btn-outline-danger" data-delete="${l.id}">Delete</button>`;
     } else if (!me || me.id !== l.ownerId) {
-        actions = `<button class="btn btn-sm btn-info fw-bold w-100" data-request="${l.id}">⇄ Request Swap</button>`;
+        actions = `<button class="btn btn-sm btn-neon w-100" data-request="${l.id}">⇄ Request Swap</button>`;
     } else {
         actions = `<span class="text-secondary small">Your listing</span>`;
     }
     return `
     <div class="col-md-6 col-lg-4">
-        <div class="card game-card">
+        <div class="card game-card plat-${platClass(l.platform)}">
             ${coverHtml(l)}
             <div class="card-body d-flex flex-column">
                 <h4 class="card-title text-warning">${esc(l.title)}</h4>
@@ -143,6 +142,11 @@ function render() {
     if (me) $('#userMenu').textContent = me.name;
 
     const listings = db.get(KEYS.listings).sort((a, b) => b.createdAt - a.createdAt);
+
+    // hero stats
+    $('#statGames').textContent = listings.length;
+    $('#statGamers').textContent = db.get(KEYS.users).length;
+    $('#statSwaps').textContent = db.get(KEYS.requests).filter(r => r.status === 'accepted').length;
 
     // browse
     const q = $('#searchInput').value.trim().toLowerCase();
